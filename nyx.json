@@ -3,7 +3,7 @@
   "project": {
     "entry": "",
     "name": "thot-connector",
-    "version": "1.0",
+    "version": "1.1-snapshot",
     "group": "dobby",
     "dependencies": [
       {
