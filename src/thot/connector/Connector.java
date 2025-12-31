@@ -1,7 +1,9 @@
 package thot.connector;
 
+import common.inject.annotations.Inject;
+import common.inject.annotations.RegisterFor;
 import common.logger.Logger;
-import dobby.Config;
+import dobby.IConfig;
 import thot.api.command.Command;
 import thot.api.command.CommandType;
 import thot.api.command.KeyType;
@@ -19,13 +21,20 @@ import java.io.Serializable;
 import java.lang.reflect.Array;
 import java.net.Socket;
 
-public class Connector {
+@RegisterFor(IConnector.class)
+public class Connector implements IConnector {
     private static final Logger LOGGER = new Logger(Connector.class);
+    private final IConfig config;
 
-    private static Response sendRequest(Command command) throws IOException, ClassNotFoundException {
-        final String dbHost = Config.getInstance().getBoolean("application.devMode", true)
+    @Inject
+    public Connector(IConfig config) {
+        this.config = config;
+    }
+
+    private Response sendRequest(Command command) throws IOException, ClassNotFoundException {
+        final String dbHost = config.getBoolean("application.devMode", true)
                 ? "localhost"
-                : Config.getInstance().getString("application.dbHost", "localhost");
+                : config.getString("application.dbHost", "localhost");
         final Socket socket = new Socket(dbHost, 12903);
 
         final ObjectOutputStream ostream = new ObjectOutputStream(socket.getOutputStream());
@@ -44,15 +53,15 @@ public class Connector {
         return response;
     }
 
-    public static boolean create(String bucketName) {
+    public boolean create(String bucketName) {
         return create(bucketName, 100);
     }
 
-    public static boolean create(String bucketName, int maxKeys) {
+    public boolean create(String bucketName, int maxKeys) {
         return create(bucketName, maxKeys, false);
     }
 
-    public static boolean create(String bucketName, int maxKeys, boolean isVolatile) {
+    public boolean create(String bucketName, int maxKeys, boolean isVolatile) {
         try {
             final Command command = new Command(CommandType.CREATE, bucketName, new CreatePayload(bucketName, maxKeys, isVolatile));
             final Response response = sendRequest(command);
@@ -69,15 +78,15 @@ public class Connector {
         }
     }
 
-    public static boolean writeCreateVolatile(String bucketName, String key, Serializable value) {
+    public boolean writeCreateVolatile(String bucketName, String key, Serializable value) {
         return write(bucketName, key, value, true);
     }
 
-    public static boolean write(String bucketName, String key, Serializable value) {
+    public boolean write(String bucketName, String key, Serializable value) {
         return write(bucketName, key, value, false);
     }
 
-    private static boolean write(String bucketName, String key, Serializable value, boolean createVolatileBucket) {
+    private boolean write(String bucketName, String key, Serializable value, boolean createVolatileBucket) {
         try {
             Command command = new Command(CommandType.WRITE, bucketName, new WritePayload(key, value, createVolatileBucket));
             Response response = sendRequest(command);
@@ -90,7 +99,7 @@ public class Connector {
     }
 
     @SuppressWarnings("unchecked")
-    public static <T> T[] readPattern(String bucketName, String pattern, Class<? extends T> comonentTypeClass) {
+    public <T> T[] readPattern(String bucketName, String pattern, Class<? extends T> comonentTypeClass) {
         try {
             Command command = new Command(CommandType.READ, bucketName, new ReadPayload(pattern, KeyType.REGEX));
             Response response = sendRequest(command);
@@ -112,7 +121,7 @@ public class Connector {
         }
     }
 
-    public static <T> T read(String bucketName, String key, Class<? extends T> typeClass) {
+    public <T> T read(String bucketName, String key, Class<? extends T> typeClass) {
         try {
             Command command = new Command(CommandType.READ, bucketName, new ReadPayload(key, KeyType.ABSOLUTE));
             Response response = sendRequest(command);
@@ -127,7 +136,7 @@ public class Connector {
         }
     }
 
-    public static String[] getKeys(String bucketName) {
+    public String[] getKeys(String bucketName) {
         try {
             Command command = new Command(CommandType.KEYS, bucketName, null);
             Response response = sendRequest(command);
@@ -142,7 +151,7 @@ public class Connector {
         }
     }
 
-    public static String[] getBuckets() {
+    public String[] getBuckets() {
         try {
             Command command = new Command(CommandType.BUCKETS, null, null);
             Response response = sendRequest(command);
@@ -157,15 +166,15 @@ public class Connector {
         }
     }
 
-    public static boolean deletePattern(String bucketName, String pattern) {
+    public boolean deletePattern(String bucketName, String pattern) {
         return delete(bucketName, pattern, KeyType.REGEX);
     }
 
-    public static boolean delete(String bucketName, String key) {
+    public boolean delete(String bucketName, String key) {
         return delete(bucketName, key, KeyType.ABSOLUTE);
     }
 
-    private static boolean delete(String bucketName, String key, KeyType keyType) {
+    private boolean delete(String bucketName, String key, KeyType keyType) {
         try {
             Command command = new Command(CommandType.DELETE, bucketName, new DeletePayload(key, keyType));
             Response response = sendRequest(command);

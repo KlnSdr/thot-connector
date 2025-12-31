@@ -8,6 +8,6 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="thot-api-1.0" level="project" />
-    <orderEntry type="library" name="dobby-config-1.0" level="project" />
+    <orderEntry type="library" name="dobby-config-1.2-snapshot" level="project" />
   </component>
 </module>
