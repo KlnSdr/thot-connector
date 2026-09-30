@@ -59,6 +59,18 @@ public class Janus {
                     if (isPrivate) {
                         field.setAccessible(false);
                     }
+                } else if (field.isAnnotationPresent(JanusFloat.class)) {
+                    final JanusFloat annotation = field.getAnnotation(JanusFloat.class);
+                    final String key = annotation.value();
+                    final double value = json.getFloat(key);
+                    final boolean isPrivate = !field.canAccess(instance);
+                    if (isPrivate) {
+                        field.setAccessible(true);
+                    }
+                    field.set(instance, value);
+                    if (isPrivate) {
+                        field.setAccessible(false);
+                    }
                 } else if (field.isAnnotationPresent(JanusDataClass.class)) {
                     final JanusDataClass annotation = field.getAnnotation(JanusDataClass.class);
                     final String key = annotation.value();
